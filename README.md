@@ -2,128 +2,185 @@
 
 ## 📌 Project Overview
 
-This project is an **end-to-end data engineering pipeline** built to
-ingest, model, and analyze football match data using **Snowflake** as
-the cloud data warehouse and **Streamlit** for analytics visualization.
+This repository contains an **end-to-end data engineering project**
+designed to showcase **hands-on Snowflake expertise** through a
+realistic ELT pipeline and analytics use case.
 
-The main objective is to **demonstrate hands-on Snowflake data
-engineering skills** in a clean, production-oriented way, suitable as a
-**first portfolio project using Snowflake**.
+The project ingests football match data, models it inside Snowflake
+using a **RAW → STG → MART** architecture, and exposes analytics through
+an interactive **Streamlit dashboard**.
 
-The project focuses on: - Raw data ingestion - Layered data modeling
-(RAW → STG → MART) - SQL-based transformations - Analytics-ready
-outputs - Interactive data consumption
-
-------------------------------------------------------------------------
-
-## 🧠 Use Case
-
-The dataset covers **Primeira Liga 2022/23** football matches.\
-From this data, the project computes:
-
--   League standings
--   Points per game (PPG)
--   Goals scored and conceded
--   Time-series performance per team
-
-The architecture is intentionally designed to be **extensible**, with a
-clear path to integrate **weather data (NOAA)** and build match-level
-football + weather analytics in future iterations.
+This is intentionally built as a **portfolio-quality Snowflake
+project**, emphasizing: - Clear data modeling and SQL proficiency -
+Practical ELT design (not toy examples) - Analytics-ready outputs
+consumed by real applications
 
 ------------------------------------------------------------------------
 
-## 🏗️ Architecture
+## 🧠 Business & Analytics Use Case
+
+The dataset covers **Primeira Liga 2022/23** football matches.
+
+From raw match-level data, the project produces: - Official league
+standings - Points-per-game (PPG) metrics - Team performance trends over
+time - Monthly goals scored and conceded
+
+The architecture is **extensible by design**, with planned integration
+of **weather data (NOAA)** to analyze environmental impact on match
+performance.
+
+------------------------------------------------------------------------
+
+## 🏗️ Architecture Overview
 
     football-weather-analytics
     │
-    ├── ingestion/
-    │   ├── ingestAll.py
-    │   ├── csvFootball.py
-    │   └── snowflake_io.py
+    ├── ingestion/                # Python ingestion layer
+    │   ├── ingestAll.py          # Orchestrates all ingestions
+    │   ├── csvFootball.py        # Football CSV ingestion
+    │   └── snowflake_io.py       # Snowflake connectivity & RAW inserts
     │
-    ├── sql/
-    │   ├── 01_init.sql
-    │   ├── 10_stgMatches.sql
-    │   └── 20_martKpis.sql
+    ├── sql/                      # Snowflake SQL transformations
+    │   ├── 01_init.sql           # Database & schema initialization
+    │   ├── 10_stgMatches.sql     # RAW → STG normalization
+    │   └── 20_martKpis.sql       # STG → MART KPIs
     │
-    ├── dashboard/
-    │   ├── app.py
+    ├── dashboard/                # Analytics & visualization
+    │   ├── app.py                # Streamlit dashboard
     │   └── data/
-    │       └── exportToCSV.py
+    │       └── exportToCSV.py    # Optional MART exports
     │
-    ├── config/
-    ├── .env
+    ├── images/                   # Dashboard screenshots
+    │   ├── 1st.png
+    │   ├── 2nd.png
+    │   ├── 3rd.png
+    │   └── 4th.png
+    │
+    ├── .env                      # Environment variables (not committed)
     ├── requirements.txt
     ├── Makefile
     └── README.md
 
 ------------------------------------------------------------------------
 
-## 🔄 Data Flow
+## 🔄 Data Flow & Design Decisions
 
-1.  **Ingestion**\
-    Football match data is downloaded from a public CSV source and
-    ingested into Snowflake RAW tables using VARIANT.
+### 1. Ingestion (Python → Snowflake RAW)
 
-2.  **Transformation**\
-    SQL transformations build STG and MART layers inside Snowflake.
+-   Public football CSV is downloaded via HTTP
+-   Each record is stored **unchanged** in Snowflake using `VARIANT`
+-   Metadata columns (`source`, `ingested_at`) enable lineage and
+    reprocessing
 
-3.  **Consumption**\
-    Streamlit dashboard queries Snowflake directly and displays
-    analytics.
+**Why this matters:**\
+This mirrors real-world ingestion patterns and avoids premature schema
+coupling.
+
+### 2. Transformation (Snowflake SQL)
+
+-   RAW → STG: typing, cleaning, normalization
+-   STG → MART: analytics-ready KPIs using window functions and
+    aggregations
+
+**Why this matters:**\
+All business logic lives inside Snowflake, following modern ELT best
+practices.
+
+### 3. Consumption (Streamlit)
+
+-   Dashboard queries Snowflake directly
+-   Cached queries reduce cost and latency
+-   MART tables can also be exported to CSV
 
 ------------------------------------------------------------------------
 
 ## 🗄️ Data Modeling Strategy
 
-### Schemas
-
-  Schema   Purpose
-  -------- ---------------------------
-  RAW      Immutable ingestion layer
-  STG      Typed, cleaned data
-  MART     Analytics-ready KPIs
+  Layer   Purpose               Key Characteristics
+  ------- --------------------- -------------------------
+  RAW     Immutable ingestion   VARIANT, schema-on-read
+  STG     Clean & typed         Normalized columns
+  MART    Analytics-ready       KPIs, aggregates
 
 ------------------------------------------------------------------------
 
-## 📊 Dashboard Features
+## 📊 Dashboard Capabilities
 
--   League standings with sorting and highlights\
--   Points per game (PPG) over time\
--   Monthly goals scored vs conceded\
--   Parameterized season range\
--   Cached Snowflake queries
+The Streamlit application demonstrates how Snowflake-modeled data can be
+consumed directly by analytics tools.
+
+Key features: - Interactive league standings - Custom sorting & ranking
+logic - Points-per-game evolution over time - Monthly goal analysis per
+team - Parameterized season boundaries - Query-level caching
+
+------------------------------------------------------------------------
+
+## 📸 Dashboard Preview
+
+The screenshots below are ordered to **tell a clear analytics story**,
+starting from high-level outcomes and drilling down into trends.
+
+### 1️⃣ League Standings (Final Outcome)
+
+League table computed from Snowflake STG data, with champion and
+relegation zones highlighted.
+
+![League Standings](images/1st.png)
+
+------------------------------------------------------------------------
+
+### 2️⃣ Points Per Game Over Time (Performance Trends)
+
+Cumulative PPG time series showing how team performance evolves
+throughout the season.
+
+![PPG Over Time](images/2nd.png)
+
+------------------------------------------------------------------------
+
+### 3️⃣ Monthly Goals Conceded (Defensive Analysis)
+
+Month-by-month aggregation of goals conceded for a selected team.
+
+![Monthly Goals Conceded](images/3rd.png)
+
+------------------------------------------------------------------------
+
+### 4️⃣ Monthly Goals Scored (Offensive Analysis)
+
+Monthly breakdown of goals scored, enabling comparison with defensive
+output.
+
+![Monthly Goals Scored](images/4th.png)
 
 ------------------------------------------------------------------------
 
 ## 🧰 Tech Stack
 
--   Python 3
--   Snowflake
--   SQL
--   pandas
--   requests
+-   **Snowflake** (cloud data warehouse)
+-   **SQL** (transformations & analytics)
+-   **Python** (ingestion & utilities)
+-   pandas, requests
 -   Streamlit
 -   python-dotenv
 
 ------------------------------------------------------------------------
 
-## ⚙️ Setup & Usage
+## ⚙️ Running the Project
 
 ``` bash
-make setup
-make ingest
-make dashboard
+make setup      # Install dependencies
+make ingest     # Run data ingestion
+make dashboard  # Launch Streamlit app
 ```
 
 ------------------------------------------------------------------------
 
-## 🚀 Next Steps
+## 🚀 Roadmap & Extensions
 
--   Weather (NOAA) ingestion
--   dbt models
--   Incremental loads
--   Snowflake tasks & streams
+Planned improvements: - NOAA weather ingestion - Match + weather
+analytics - Incremental ingestion patterns - dbt-based transformations -
+Snowflake tasks & streams - Cost and performance optimization
 
 ------------------------------------------------------------------------
 
@@ -131,3 +188,7 @@ make dashboard
 
 **Luís Figueiredo**\
 Data Engineer --- 5+ years of experience
+
+This project is part of a personal portfolio to demonstrate
+**production-oriented Snowflake data engineering**, strong SQL modeling,
+and analytics-focused thinking.
